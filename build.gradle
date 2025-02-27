@@ -33,6 +33,18 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.batch:spring-batch-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    // stax event item reader를 잘 사용하기 위해
+    implementation 'org.springframework:spring-oxm'
+    implementation 'com.thoughtworks.xstream:xstream:1.4.20'
+
+    // json item reader를 사용하기 위해
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
+    // JpaItemWriter
+    implementation 'org.modelmapper:modelmapper:3.1.1'
+
+
 }
 
 tasks.named('test') {

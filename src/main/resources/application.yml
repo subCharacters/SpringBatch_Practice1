@@ -1,12 +1,35 @@
 spring:
-  jpa:
+  batch:
+    job:
+      # program arguments로 --job.name=batchJob 과 같이 설정하여 특정 job을 지정할 수 있다.
+      # 값이 없으면 임의의 문자열인 NONE이 설정된다.
+      name: ${job.name:NONE}
     hibernate:
       ddl-auto: update
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.MySQLDialect
+    jdbc:
+      initialize-schema: always
+  jpa:
+    hibernate:
+      ddl-auto: update
+    database-platform: org.hibernate.dialect.MySQLDialect
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
   datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://localhost:3306/test?serverTimezone=Asia/Tokyo
     username: root
     password: Admin!@34
+  sql:
+    init:
+      schema-locations: classpath:schema-mysql.sql
+      data-locations: classpath:data-mysql.sql
+      mode: always
+logging:
+  level:
+    root: INFO

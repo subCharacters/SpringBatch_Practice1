@@ -1,4 +1,4 @@
-package com.practice.springbatch_practice1.batch;
+package com.practice.springbatch_practice1.config.flowjob;
 
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
@@ -12,24 +12,25 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class TemplateJob {
+public class FlowJobCustomExitStatusConfiguration {
 
     @Bean
-    public Job batchTemplateJob(JobRepository jobRepository
-            , Step templateJobStep1
-            , Step templateJobStep2
-            , Step templateJobStep3
-            , Step templateJobStep4
-            , Step templateJobStep5) {
-        return new JobBuilder("batchTemplateJob", jobRepository)
-                .start(templateJobStep1)
-                .next()
+    public Job batchFlowJobCustomExitStatusJob(JobRepository jobRepository
+            , Step flowJobCustomExitStatusJobStep1
+            , Step flowJobCustomExitStatusJobStep2) {
+        return new JobBuilder("batchFlowJobCustomExitStatusJob", jobRepository)
+                .start(flowJobCustomExitStatusJobStep1)
+                    .on("FAILED")
+                    .to(flowJobCustomExitStatusJobStep2)
+                    .on("PASS")
+                    .stop()
+                .end()
                 .build();
     }
 
     @Bean
-    public Step templateJobStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep1", jobRepository)
+    public Step flowJobCustomExitStatusJobStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("flowJobCustomExitStatusJobStep1", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 1 executed");
                     contribution.setExitStatus(ExitStatus.FAILED); // exit status를 정의
@@ -39,43 +40,13 @@ public class TemplateJob {
     }
 
     @Bean
-    public Step templateJobStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep2", jobRepository)
+    public Step flowJobCustomExitStatusJobStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("flowJobCustomExitStatusJobStep2", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 2 executed");
-                    contribution.setExitStatus(ExitStatus.COMPLETED);
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
-                .build();
-    }
-
-    @Bean
-    public Step templateJobStep3(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep3", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 3 executed");
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
-                .build();
-    }
-
-    @Bean
-    public Step templateJobStep4(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep4", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 4 executed");
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
-                .build();
-    }
-
-    @Bean
-    public Step templateJobStep5(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep5", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 5 executed");
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
+                .listener(new CustomExitStatus()) // 리스너를 통해 새로 exit status code를 정의
                 .build();
     }
 }

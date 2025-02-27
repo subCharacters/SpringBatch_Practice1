@@ -3,7 +3,9 @@ package com.practice.springbatch_practice1.config.flowjob;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.StepContribution;
+import org.springframework.batch.core.job.builder.FlowBuilder;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.job.flow.Flow;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
@@ -14,65 +16,85 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class FlowJobApi {
+public class FlowJobStartNextConfiguration {
 
     @Bean
-    public Job batchFlowJobApi(JobRepository jobRepository, Step flowJobApiStep1, Step flowJobApiStep2 ,Step flowJobApiStep3) {
-        return new JobBuilder("flowJobApi", jobRepository)
-                .start(flowJobApiStep1)
-                .on("COMPLETED").to(flowJobApiStep3) // flowJobApiStep1이 성공하면 flowJobApiStep3로 가고
-                .from(flowJobApiStep1).on("FAILED").to(flowJobApiStep2) // flowJobApiStep1이 실패하면 flowJobApiStep2로 가라
+    public Job batchFlowJobStartNextJob(JobRepository jobRepository, Flow flowJobStartNextFlow1
+            , Flow flowJobStartNextFlow2 ,Step flowJobStartNextStep3, Step flowJobStartNextStep6) {
+        return new JobBuilder("batchFlowJobStartNextJob", jobRepository)
+                .start(flowJobStartNextFlow1)
+                .next(flowJobStartNextStep3)
+                .next(flowJobStartNextFlow2)
+                .next(flowJobStartNextStep6)
                 .end()
                 .build();
     }
 
     @Bean
-    public Step flowJobApiStep1(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
-        return new StepBuilder("flowJobApiStep1", jobRepository)
-                .tasklet(flowJobTasklet1(), platformTransactionManager)
+    public Flow flowJobStartNextFlow1(Step flowJobStartNextStep1, Step flowJobStartNextStep2) {
+        return new FlowBuilder<Flow>("flowJobStartNextFlow1")
+                .start(flowJobStartNextStep1)
+                .next(flowJobStartNextStep2)
+                .end();
+    }
+
+    @Bean
+    public Flow flowJobStartNextFlow2(Step flowJobStartNextStep4, Step flowJobStartNextStep5) {
+        return new FlowBuilder<Flow>("flowJobStartNextFlow1")
+                .start(flowJobStartNextStep4)
+                .next(flowJobStartNextStep5)
+                .end();
+    }
+
+    @Bean
+    public Step flowJobStartNextStep1(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
+        return new StepBuilder("flowJobStartNextStep1", jobRepository)
+                .tasklet(flowJobStartNextTasklet1(), platformTransactionManager)
                 .build();
     }
 
     @Bean
-    public Step flowJobApiStep2(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
-        return new StepBuilder("flowJobApiStep2", jobRepository)
-                .tasklet(flowJobTasklet2(), platformTransactionManager)
+    public Step flowJobStartNextStep2(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
+        return new StepBuilder("flowJobStartNextStep2", jobRepository)
+                .tasklet(flowJobStartNextTasklet1(), platformTransactionManager)
                 .build();
     }
 
     @Bean
-    public Step flowJobApiStep3(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
-        return new StepBuilder("flowJobApiStep3", jobRepository)
-                .tasklet(flowJobTasklet3(), platformTransactionManager)
+    public Step flowJobStartNextStep3(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
+        return new StepBuilder("flowJobStartNextStep3", jobRepository)
+                .tasklet(flowJobStartNextTasklet1(), platformTransactionManager)
                 .build();
     }
 
-    public Tasklet flowJobTasklet1() {
+    @Bean
+    public Step flowJobStartNextStep4(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
+        return new StepBuilder("flowJobStartNextStep4", jobRepository)
+                .tasklet(flowJobStartNextTasklet1(), platformTransactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step flowJobStartNextStep5(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
+        return new StepBuilder("flowJobStartNextStep5", jobRepository)
+                .tasklet(flowJobStartNextTasklet1(), platformTransactionManager)
+                .build();
+    }
+
+    @Bean
+    public Step flowJobStartNextStep6(JobRepository jobRepository, PlatformTransactionManager platformTransactionManager) {
+        return new StepBuilder("flowJobStartNextStep6", jobRepository)
+                .tasklet(flowJobStartNextTasklet1(), platformTransactionManager)
+                .build();
+    }
+
+    public Tasklet flowJobStartNextTasklet1() {
         return new Tasklet() {
             @Override
             public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-                System.out.println("flowJobTasklet1 has executed");
+                String stepName = contribution.getStepExecution().getStepName();
+                System.out.println(stepName + " has executed");
                 // throw new RuntimeException("fail");
-                return RepeatStatus.FINISHED;
-            }
-        };
-    }
-
-    public Tasklet flowJobTasklet2() {
-        return new Tasklet() {
-            @Override
-            public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-                System.out.println("flowJobTasklet2 has executed");
-                return RepeatStatus.FINISHED;
-            }
-        };
-    }
-
-    public Tasklet flowJobTasklet3() {
-        return new Tasklet() {
-            @Override
-            public RepeatStatus execute(StepContribution contribution, ChunkContext chunkContext) throws Exception {
-                System.out.println("flowJobTasklet3 has executed");
                 return RepeatStatus.FINISHED;
             }
         };

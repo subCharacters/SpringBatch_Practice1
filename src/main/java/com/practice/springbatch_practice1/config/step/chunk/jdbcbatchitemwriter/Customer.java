@@ -1,4 +1,4 @@
-package com.practice.springbatch_practice1.config.step.chunk.jsonItemWriter;
+package com.practice.springbatch_practice1.config.step.chunk.jdbcbatchitemwriter;
 
 import lombok.Data;
 

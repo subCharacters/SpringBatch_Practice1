@@ -8,32 +8,34 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.Chunk;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.builder.FlatFileItemReaderBuilder;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
-import org.springframework.batch.item.file.mapping.DefaultLineMapper;
-import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.batch.item.file.transform.Range;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.transaction.PlatformTransactionManager;
 
+/**
+ * TODO 파일 두개 동시에 읽는 거
+ */
 @Configuration
-public class FlatFileItemReaderDelimitedConfiguration {
+public class FlatFileItemReaderTokenizerConfiguration {
 
     @Bean
-    public Job flatFileItemReaderDelimitedJob(JobRepository jobRepository
-    , Step flatFileItemReaderDelimitedStep1
-    , Step flatFileItemReaderDelimitedStep2) {
-        return new JobBuilder("flatFileItemReaderDelimitedJob", jobRepository)
-                .start(flatFileItemReaderDelimitedStep1)
-                .next(flatFileItemReaderDelimitedStep2)
+    public Job flatFileItemReaderTokenizerJob(JobRepository jobRepository
+    , Step flatFileItemReaderDelimitedStep
+    , Step flatFileItemReaderFixedLengthStep) {
+        return new JobBuilder("flatFileItemReaderTokenizerJob", jobRepository)
+                .start(flatFileItemReaderDelimitedStep)
+                .next(flatFileItemReaderFixedLengthStep)
                 .build();
     }
 
     @Bean
-    public Step flatFileItemReaderDelimitedStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public Step flatFileItemReaderDelimitedStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
         return new StepBuilder("flatFileItemReaderDelimitedStep1", jobRepository)
                 .<String, String>chunk(5, transactionManager)
                 .reader(flatFileItemReaderDelimitedReader())
@@ -61,6 +63,7 @@ public class FlatFileItemReaderDelimitedConfiguration {
                  */
                 .resource(new ClassPathResource("/customers.csv"))
                 .fieldSetMapper(new BeanWrapperFieldSetMapper<>())
+                .strict(false) // 엄격하게 검사 유무. 기본은 true로 읽은 행의 항목 수와 설정한 항목 수를 체크한다.
                 .targetType(Customer.class)
                 .linesToSkip(1)
                 .delimited().delimiter(",")
@@ -69,12 +72,33 @@ public class FlatFileItemReaderDelimitedConfiguration {
     }
 
     @Bean
-    public Step flatFileItemReaderDelimitedStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("flatFileItemReaderDelimitedStep2", jobRepository)
-                .tasklet((contribution, chunkContext) -> {
-                    System.out.println("step2 was executed.");
-                    return RepeatStatus.FINISHED;
-                }, transactionManager)
+    public Step flatFileItemReaderFixedLengthStep(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("flatFileItemReaderFixedLengthStep", jobRepository)
+                .<String, String>chunk(5, transactionManager)
+                .reader(flatFileItemReaderFixedLengthReader())
+                .writer(new ItemWriter() {
+                    @Override
+                    public void write(Chunk chunk) throws Exception {
+                        chunk.getItems().forEach(System.out::println);
+                    }
+                })
+                .build();
+    }
+
+    @Bean
+    public ItemReader flatFileItemReaderFixedLengthReader() {
+        return new FlatFileItemReaderBuilder<Customer>()
+                .name("flatFileItemReaderFixedLengthReader")
+                .resource(new FileSystemResource("C:\\Users\\wldns\\IdeaProjects\\SpringBatch_Practice1\\src\\main\\resources\\customers.txt"))
+                .targetType(Customer.class)
+                .linesToSkip(1)
+                .fixedLength()
+                .strict(false) // 엄격하게 검사 유무. 기본은 true로 읽은 행의 길이와 range를 체크한다.
+                //.addColumns(new Range(1,5))
+                //.addColumns(new Range(6,9))
+                //.addColumns(new Range(10,11))
+                .columns(new Range(1,5), new Range(6,9), new Range(10,11)) // addColumns와 어느 쪽도 사용 가능.
+                .names("name", "year", "age")
                 .build();
     }
 }

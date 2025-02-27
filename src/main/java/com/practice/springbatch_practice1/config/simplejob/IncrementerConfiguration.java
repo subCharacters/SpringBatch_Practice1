@@ -2,11 +2,9 @@ package com.practice.springbatch_practice1.config.simplejob;
 
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
-import org.springframework.batch.core.StepContribution;
-import org.springframework.batch.core.job.DefaultJobParametersValidator;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.launch.support.RunIdIncrementer;
 import org.springframework.batch.core.repository.JobRepository;
-import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.core.step.tasklet.Tasklet;
 import org.springframework.batch.repeat.RepeatStatus;
@@ -15,52 +13,46 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class PreventRestartConfiguration {
+public class IncrementerConfiguration {
 
     @Bean
-    public Job batchJob1(JobRepository jobRepository, Step step1, Step step2, Step step3) {
-        return new JobBuilder("batchJob1", jobRepository)
-                .start(step1)
-                .next(step2)
-                .next(step3)
-                .preventRestart() // job이 실패해서 재시작이 되어야 하지만 재시작을 못한다.
+    public Job incrementerJob(JobRepository jobRepository, Step incrementerStep1, Step incrementerStep2, Step incrementerStep3) {
+        return new JobBuilder("incrementerJob", jobRepository)
+                .start(incrementerStep1)
+                .next(incrementerStep2)
+                .next(incrementerStep3)
+                .incrementer(new RunIdIncrementer()) // 스프링 배치에서 제공해주는 클래스를 이용할 경우
+                .incrementer(new CustomJobParametersIncrementer()) // 직접 만들경우.
                 .build();
     }
 
     @Bean
-    public Step step1(JobRepository jobRepository, Tasklet testTasklet,PlatformTransactionManager transactionManager) {
-        return new StepBuilder("step1", jobRepository)
-                .tasklet(testTasklet, transactionManager)
+    public Step incrementerStep1(JobRepository jobRepository, Tasklet incrementerTestTasklet,PlatformTransactionManager transactionManager) {
+        return new StepBuilder("incrementerStep1", jobRepository)
+                .tasklet(incrementerTestTasklet, transactionManager)
                 .build();
     }
 
     @Bean
-    public Step step2(JobRepository jobRepository, Tasklet testTasklet,PlatformTransactionManager transactionManager) {
-        return new StepBuilder("step2", jobRepository)
-                .tasklet(testTasklet, transactionManager)
+    public Step incrementerStep2(JobRepository jobRepository, Tasklet incrementerTestTasklet,PlatformTransactionManager transactionManager) {
+        return new StepBuilder("incrementerStep2", jobRepository)
+                .tasklet(incrementerTestTasklet, transactionManager)
                 .build();
     }
 
     @Bean
-    public Step step3(JobRepository jobRepository, Tasklet failTasklet, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("step3", jobRepository)
-                .tasklet(failTasklet, transactionManager)
+    public Step incrementerStep3(JobRepository jobRepository, Tasklet incrementerTestTasklet, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("incrementerStep3", jobRepository)
+                .tasklet(incrementerTestTasklet, transactionManager)
                 .build();
     }
 
     @Bean
-    public Tasklet testTasklet() {
+    public Tasklet incrementerTestTasklet() {
         return ((contribution, chunkContext) -> {
             String stepName = chunkContext.getStepContext().getStepName();
             System.out.println(stepName + " is execute");
             return RepeatStatus.FINISHED;
-        });
-    }
-
-    @Bean
-    public Tasklet failTasklet() {
-        return ((contribution, chunkContext) -> {
-            throw new RuntimeException("step3 was failed");
         });
     }
 }

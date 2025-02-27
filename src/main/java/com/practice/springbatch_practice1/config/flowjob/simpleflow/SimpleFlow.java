@@ -1,4 +1,4 @@
-package com.practice.springbatch_practice1.batch;
+package com.practice.springbatch_practice1.config.flowjob.simpleflow;
 
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
@@ -12,24 +12,24 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
-public class TemplateJob {
+public class SimpleFlow {
 
     @Bean
-    public Job batchTemplateJob(JobRepository jobRepository
+    public Job batchSimpleFlowJob(JobRepository jobRepository
             , Step templateJobStep1
             , Step templateJobStep2
             , Step templateJobStep3
             , Step templateJobStep4
             , Step templateJobStep5) {
-        return new JobBuilder("batchTemplateJob", jobRepository)
+        return new JobBuilder("batchSimpleFlowJob", jobRepository)
                 .start(templateJobStep1)
                 .next(templateJobStep2)
                 .build();
     }
 
     @Bean
-    public Step templateJobStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep1", jobRepository)
+    public Step simpleFlowStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("simpleFlowStep1", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 1 executed");
                     contribution.setExitStatus(ExitStatus.FAILED); // exit status를 정의
@@ -39,8 +39,8 @@ public class TemplateJob {
     }
 
     @Bean
-    public Step templateJobStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep2", jobRepository)
+    public Step simpleFlowStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("simpleFlowStep2", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 2 executed");
                     contribution.setExitStatus(ExitStatus.COMPLETED);
@@ -50,8 +50,8 @@ public class TemplateJob {
     }
 
     @Bean
-    public Step templateJobStep3(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep3", jobRepository)
+    public Step simpleFlowStep3(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("simpleFlowStep3", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 3 executed");
                     return RepeatStatus.FINISHED;
@@ -60,8 +60,8 @@ public class TemplateJob {
     }
 
     @Bean
-    public Step templateJobStep4(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep4", jobRepository)
+    public Step simpleFlowStep4(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("simpleFlowStep4", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 4 executed");
                     return RepeatStatus.FINISHED;
@@ -70,8 +70,8 @@ public class TemplateJob {
     }
 
     @Bean
-    public Step templateJobStep5(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep5", jobRepository)
+    public Step simpleFlowStep5(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("simpleFlowStep5", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 5 executed");
                     return RepeatStatus.FINISHED;

@@ -1,11 +1,11 @@
-package com.practice.springbatch_practice1.config.step.chunk.staxeventitemreader;
+package com.practice.springbatch_practice1.config.step.chunk.staxeventitemwriter;
 
-import com.thoughtworks.xstream.annotations.XStreamAlias;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 
 @Data
-@XStreamAlias("customer")
+@AllArgsConstructor
 public class Customer {
     private long id;
     private String name;

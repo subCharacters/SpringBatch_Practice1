@@ -1,0 +1,1 @@
+select `firstName`,`lastName`,`birthdate` from customer where firstName like ? order by lastName, firstName;

@@ -8,82 +8,89 @@ import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.ItemWriter;
-import org.springframework.batch.item.support.ListItemReader;
-import org.springframework.batch.item.xml.builder.StaxEventItemWriterBuilder;
+import org.springframework.batch.item.database.Order;
+import org.springframework.batch.item.database.PagingQueryProvider;
+import org.springframework.batch.item.database.builder.JdbcPagingItemReaderBuilder;
+import org.springframework.batch.item.database.support.SqlPagingQueryProviderFactoryBean;
+import org.springframework.batch.item.json.JacksonJsonObjectMarshaller;
+import org.springframework.batch.item.json.builder.JsonFileItemWriterBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.oxm.Marshaller;
-import org.springframework.oxm.xstream.XStreamMarshaller;
+import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import java.util.Arrays;
+import javax.sql.DataSource;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @Configuration
-public class StaxEventItemWriterConfiguration {
+public class JsonItemWriterConfiguration {
     private final JobRepository jobRepository;
     private final PlatformTransactionManager transactionManager;
+    private final DataSource dataSource;
 
-    public StaxEventItemWriterConfiguration(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+    public JsonItemWriterConfiguration(JobRepository jobRepository, PlatformTransactionManager transactionManager, DataSource dataSource, PagingQueryProvider createQueryProvider) {
         this.jobRepository = jobRepository;
         this.transactionManager = transactionManager;
+        this.dataSource = dataSource;
     }
 
     @Bean
-    public Job staxEventItemWriterJob() {
-        return new JobBuilder("staxEventItemWriterJob", jobRepository)
-                .start(staxEventItemWriterStep())
+    public Job jsonItemWriterJob() throws Exception {
+        return new JobBuilder("jsonItemWriterJob", jobRepository)
+                .start(jsonItemWriterStep())
                 .incrementer(new RunIdIncrementer())
                 .build();
     }
 
     @Bean
-    public Step staxEventItemWriterStep() {
-        return new StepBuilder("staxEventItemWriterStep", jobRepository)
+    public Step jsonItemWriterStep() throws Exception {
+        return new StepBuilder("jsonItemWriterStep", jobRepository)
                 .<Customer, Customer>chunk(10, transactionManager)
-                .reader(staxEventItemWriterReader())
-                .writer(staxEventItemWriterWriter())
+                .reader(jsonItemWriterReader())
+                .writer(jsonItemWriterWriter())
                 .build();
     }
 
     @Bean
-    public ItemWriter<? super Customer> staxEventItemWriterWriter() {
-        return new StaxEventItemWriterBuilder<Customer>()
-                .name("staxEventItemWriterWriter")
+    public ItemWriter<? super Customer> jsonItemWriterWriter() {
+        return new JsonFileItemWriterBuilder<Customer>()
+                .name("JsonItemWriterWriter")
                 .resource(new FileSystemResource(
                         "C:\\Users\\wldns\\IdeaProjects\\SpringBatch_Practice1\\" +
-                                "src\\main\\resources\\writer\\staxEventItemWriter.xml"))
-                .marshaller(itemMarshaller())
-                .rootTagName("customers")
+                                "src\\main\\resources\\writer\\jsonItemWriter.json"))
+                .jsonObjectMarshaller(new JacksonJsonObjectMarshaller<>())
                 .build();
     }
 
-    private Marshaller itemMarshaller() {
-        Map<String, Class<?>> map = new HashMap<>();
-        map.put("customer", Customer.class);
-        map.put("id", Long.class);
-        map.put("name", String.class);
-        map.put("age", Integer.class);
+    // jdbc paging은 bean으로 안하면 datasource가 null로 되어버리는듯.
+    @Bean
+    public ItemReader<? extends Customer> jsonItemWriterReader() throws Exception {
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("firstName", "A%");
 
-        XStreamMarshaller xStreamMarshaller = new XStreamMarshaller();
-        xStreamMarshaller.setAliases(map);
-        return xStreamMarshaller;
+        return new JdbcPagingItemReaderBuilder<Customer>()
+                .name("jsonItemWriterReader")
+                .dataSource(dataSource)
+                .pageSize(10)
+                .queryProvider(jsonItemWriterQueryProvider())
+                .parameterValues(parameters)
+                .rowMapper(new BeanPropertyRowMapper<>(Customer.class))
+                .build();
     }
 
-    private ItemReader<? extends Customer> staxEventItemWriterReader() {
-        List<Customer> customers = Arrays.asList(
-                new Customer(1, "user1", 21),
-                new Customer(2, "user2", 22),
-                new Customer(3, "user3", 23),
-                new Customer(4, "user4", 24),
-                new Customer(5, "user5", 25)
-        );
+    @Bean
+    public PagingQueryProvider jsonItemWriterQueryProvider() throws Exception {
+        SqlPagingQueryProviderFactoryBean factoryBean = new SqlPagingQueryProviderFactoryBean();
+        factoryBean.setDataSource(dataSource);
+        factoryBean.setSelectClause("id, firstName, lastName, birthdate");
+        factoryBean.setFromClause("customer");
+        factoryBean.setWhereClause("firstName like :firstName");
 
-        ListItemReader itemReader = new ListItemReader(customers);
-        return itemReader;
+        Map<String, Order> sortKeys = new HashMap<>();
+        sortKeys.put("id", Order.ASCENDING);
+        factoryBean.setSortKeys(sortKeys);
+        return factoryBean.getObject();
     }
-
 }

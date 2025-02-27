@@ -1,6 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<beans xmlns="http://www.springframework.org/schema/beans"
-       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
-
-</beans>
+<customers>
+    <customer>
+        <id>1</id>
+        <name>hong gil dong1</name>
+        <age>40</age>
+    </customer>
+    <customer>
+        <id>2</id>
+        <name>hong gil dong2</name>
+        <age>41</age>
+    </customer>
+    <customer>
+        <id>3</id>
+        <name>hong gil dong3</name>
+        <age>42</age>
+    </customer>
+</customers>

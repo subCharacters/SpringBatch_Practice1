@@ -1,4 +1,4 @@
-//package com.practice.springbatch_practice1.config.step.chunk.jpapagingitemreader;
+package com.practice.springbatch_practice1.config.step.chunk.jpaitemwriter;//package com.practice.springbatch_practice1.config.step.chunk.jpapagingitemreader;
 //
 //
 // import jakarta.persistence.Column;

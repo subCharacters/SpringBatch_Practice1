@@ -1,4 +1,4 @@
-package com.practice.springbatch_practice1.batch;
+package com.practice.springbatch_practice1.config.step.chunk;
 
 import org.springframework.batch.core.ExitStatus;
 import org.springframework.batch.core.Job;
@@ -6,74 +6,59 @@ import org.springframework.batch.core.Step;
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.Chunk;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemWriter;
+import org.springframework.batch.item.support.ListItemReader;
 import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import java.util.Arrays;
+
 @Configuration
-public class TemplateJob {
+public class ChunkJob {
 
     @Bean
-    public Job batchTemplateJob(JobRepository jobRepository
-            , Step templateJobStep1
-            , Step templateJobStep2
-            , Step templateJobStep3
-            , Step templateJobStep4
-            , Step templateJobStep5) {
-        return new JobBuilder("batchTemplateJob", jobRepository)
-                .start(templateJobStep1)
-                .next(templateJobStep2)
+    public Job batchChunkJob(JobRepository jobRepository
+            , Step chunkJobStep1
+            , Step chunkJobStep2) {
+        return new JobBuilder("batchChunkJob", jobRepository)
+                .start(chunkJobStep1)
+                .next(chunkJobStep2)
                 .build();
     }
 
     @Bean
-    public Step templateJobStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep1", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 1 executed");
-                    contribution.setExitStatus(ExitStatus.FAILED); // exit status를 정의
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
+    public Step chunkJobStep1(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("chunkJobStep1", jobRepository)
+                .<String, String>chunk(5, transactionManager)
+                .reader(new ListItemReader<>(Arrays.asList("item1", "item2", "item3", "item4", "item5")))
+                .processor(new ItemProcessor<String, String>() {
+                    @Override
+                    public String process(String item) throws Exception {
+                        Thread.sleep(300);
+                        System.out.println("item = " + item);
+                        return "my" + item;
+                    }
+                })
+                .writer(new ItemWriter<String>() {
+                    @Override
+                    public void write(Chunk<? extends String> chunk) throws Exception {
+                        Thread.sleep(300);
+                        System.out.println("chunk = " + chunk);
+                    }
+                })
                 .build();
     }
 
     @Bean
-    public Step templateJobStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep2", jobRepository)
+    public Step chunkJobStep2(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
+        return new StepBuilder("chunkJobStep2", jobRepository)
                 .tasklet(((contribution, chunkContext) -> {
                     System.out.println("Step 2 executed");
                     contribution.setExitStatus(ExitStatus.COMPLETED);
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
-                .build();
-    }
-
-    @Bean
-    public Step templateJobStep3(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep3", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 3 executed");
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
-                .build();
-    }
-
-    @Bean
-    public Step templateJobStep4(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep4", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 4 executed");
-                    return RepeatStatus.FINISHED;
-                }), transactionManager)
-                .build();
-    }
-
-    @Bean
-    public Step templateJobStep5(JobRepository jobRepository, PlatformTransactionManager transactionManager) {
-        return new StepBuilder("templateJobStep5", jobRepository)
-                .tasklet(((contribution, chunkContext) -> {
-                    System.out.println("Step 5 executed");
                     return RepeatStatus.FINISHED;
                 }), transactionManager)
                 .build();
