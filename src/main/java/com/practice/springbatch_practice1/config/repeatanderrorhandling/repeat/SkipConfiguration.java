@@ -22,6 +22,14 @@ import java.util.Map;
  * process의 경우 reader로 다시 돌아가서 캐싱한 reader 데이터를 받는데 item2를 빼고 재처리.
  * writer의 경우도 process와 마찬가지로 itme2를 빼고 다시 처리한다.
  * 결론은 item2를 빼로 처리한다는 소리이다.
+ *
+ * item: 1,2,3,4,5,6,7,8,9,10
+ * chunk size: 5
+ * error item: 2
+ * 라고 가정했을 때
+ * item reader 에서 에러 났을 때 1,3,4,5,6과 7,8,9,10 순으로 처리
+ * item process 에서 에러가 났을 때 1,3,4,5와 6,8,9,10 순으로 처리
+ * item writer 에서 에러가 났을 때 1,3,4,5와 6,7,8,9,10 순으로 처리
  */
 @Configuration
 public class SkipConfiguration {
@@ -53,7 +61,7 @@ public class SkipConfiguration {
                     public String read() throws Exception, UnexpectedInputException, ParseException, NonTransientResourceException {
                         count++;
                         if (count == 3) {
-                            throw new NonTransientResourceException("This is a itemreader exception");
+                            // throw new NonTransientResourceException("This is a itemreader exception");
                         }
                         System.out.println("item reader" + count);
                         return count > 20 ? null : String.valueOf(count);
@@ -76,8 +84,8 @@ public class SkipConfiguration {
                     public void write(Chunk<? extends String> chunk) throws Exception {
                         chunk.getItems().forEach(item -> {
                             if (item.equals("-12")) {
-                                System.out.println("item writer if = " + item);
-                                throw new NonTransientResourceException("This is a itemwriter exception");
+                                // System.out.println("item writer if = " + item);
+                                // throw new NonTransientResourceException("This is a itemwriter exception");
                             }
                             System.out.println("item writer else = " + item);
                         });
