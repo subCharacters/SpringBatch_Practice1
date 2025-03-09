@@ -45,6 +45,8 @@ dependencies {
     // JpaItemWriter
     implementation 'org.modelmapper:modelmapper:3.1.1'
 
+    // multi thread
+    implementation 'org.springframework.batch:spring-batch-integration'
 
 }
 
