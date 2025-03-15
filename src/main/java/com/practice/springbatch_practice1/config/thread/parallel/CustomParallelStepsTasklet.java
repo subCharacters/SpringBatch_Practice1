@@ -17,6 +17,7 @@ public class CustomParallelStepsTasklet implements Tasklet {
         }
 
         System.out.println("Sum: " + sum);
+        System.out.println("end " + contribution.getStepExecution().getStepName());
 
         return RepeatStatus.FINISHED;
     }
