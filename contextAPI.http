@@ -1,3 +1,13 @@
 ### GET request to example server
 GET http://localhost:8080/job-execution-context?jobExecutionId=14
 ###
+
+GET localhost:8080/batch/start?id=2
+
+###
+
+GET localhost:8080/batch/stop
+
+###
+
+GET localhost:8080/batch/restart
